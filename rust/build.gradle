@@ -1,0 +1,111 @@
+import com.wooga.gradle.PlatformUtils
+import wooga.gradle.rust.tasks.AbstractRustCompile
+import wooga.gradle.rust.tasks.RustCompile
+
+plugins {
+    id 'base'
+    id "net.wooga.rust.lib" version "1.0.0"
+    id "net.wooga.rustup" version "1.0.0"
+}
+
+def rustTargets = ["x86_64-apple-darwin", "aarch64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"]
+
+rustup {
+    cargoHome.set(project.layout.buildDirectory.dir('cargo'))
+    rustupHome.set(project.layout.buildDirectory.dir('rustup'))
+
+    defaultToolchain = "stable"
+    update = true
+    profile = "minimal"
+
+    if (PlatformUtils.isMac()) {
+        targets = rustTargets.findAll { it.contains("apple") }
+    }
+    if (PlatformUtils.isLinux()) {
+        targets = rustTargets.findAll { it.contains("linux") }
+    }
+    if (PlatformUtils.isWindows()) {
+        targets = rustTargets.findAll { it.contains("windows") }
+    }
+}
+
+rust {
+    useLocalInstallation(provider({
+        true
+    }))
+
+    rustupHome(rustup.rustupHome)
+    cargoHome(rustup.cargoHome)
+    //patchCargoVersion(true)
+}
+
+
+task compileMacOsAarch64(type: RustCompile) {
+    dependsOn(rustup)
+    compileType = AbstractRustCompile.CompileType.LIB
+    target = "aarch64-apple-darwin"
+    release(true)
+}
+
+task compileMacOsx86(type: RustCompile) {
+    dependsOn(rustup)
+    mustRunAfter compileMacOsAarch64
+
+    compileType = AbstractRustCompile.CompileType.LIB
+    target = "x86_64-apple-darwin"
+    release(true)
+}
+
+
+compileLibRust {
+    mustRunAfter compileMacOsx86
+    dependsOn(rustup)
+    release(true)
+}
+
+task generateUniversalBinary(type: Exec) {
+    inputs.files(
+            compileMacOsAarch64.getOutputDir().map({ it.file("libkassandra_jni.dylib") }),
+            compileMacOsx86.getOutputDir().map({ it.file("libkassandra_jni.dylib") }),
+    )
+
+    outputs.file("${buildDir}/output/libkassandra_jni.dylib")
+
+    dependsOn compileMacOsAarch64, compileMacOsx86
+    executable = "lipo"
+    args "-create", "-output", outputs.files.singleFile
+    args inputs.files
+}
+
+configurations {
+    rustLib
+}
+
+task copyOut(type: Copy) {
+    dependsOn compileLibRust
+
+    from file("${buildDir}/rust-project/target/release/")
+    include "*.dll"
+    include "*.so"
+    into file("${buildDir}/output")
+}
+
+task assembleLibraryFiles {
+    outputs.dir("${buildDir}/outputs")
+    if(PlatformUtils.isMac()) {
+        dependsOn generateUniversalBinary
+    } else {
+        dependsOn copyOut
+    }
+}
+
+
+configurations['default'].extendsFrom(configurations.rustLib)
+
+artifacts {
+    rustLib file: file("${buildDir}/output/libkassandra_jni.dylib"), name: "libkassandra_jni", type: "dylib", builtBy: assembleLibraryFiles
+    rustLib file: file("${buildDir}/output/libkassandra_jni.so"), name: "libkassandra_jni", type: "so", builtBy: assembleLibraryFiles
+    rustLib file: file("${buildDir}/output/kassandra_jni.dll"), name: "libkassandra_jni", type: "dll", builtBy: assembleLibraryFiles
+}
+
+assemble.dependsOn assembleLibraryFiles
