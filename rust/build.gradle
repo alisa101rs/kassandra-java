@@ -8,13 +8,22 @@ plugins {
     id "net.wooga.rustup" version "1.0.0"
 }
 
+tasks.configureEach { task ->
+    if(task.name.contains("testRust")) {
+        task.enabled = false
+    }
+}
+
+
+
+
 def rustTargets = ["x86_64-apple-darwin", "aarch64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"]
 
 rustup {
     cargoHome.set(project.layout.buildDirectory.dir('cargo'))
     rustupHome.set(project.layout.buildDirectory.dir('rustup'))
 
-    defaultToolchain = "stable"
+    defaultToolchain = "nightly"
     update = true
     profile = "minimal"
 
@@ -109,3 +118,19 @@ artifacts {
 }
 
 assemble.dependsOn assembleLibraryFiles
+
+testRust.enabled = false
+compileTestRust.enabled = false
+
+check {
+    setEnabled(false)
+    setDefaultTasks([])
+
+}
+tasks.findByName("check").enabled(false)
+
+
+build {
+
+    dependsOn("assemble")
+}

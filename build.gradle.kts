@@ -1,12 +1,12 @@
-import org.gradle.internal.impldep.org.apache.maven.model.ConfigurationContainer
 
 plugins {
-    kotlin("jvm") version "1.9.0"
+    kotlin("jvm") version "1.9.10"
     `java-library`
+    kotlin("plugin.serialization") version "1.9.10"
 }
 
 group = "com.github"
-version = "0.1.0.0"
+version = "0.1.0"
 
 repositories {
     mavenCentral()
@@ -21,10 +21,20 @@ val rustLib = configurations.create("rustLib")
 
 dependencies {
     rustLib(project("rust"))
+
+    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.2")
+    implementation("io.ktor:ktor-server-core-jvm:2.3.4")
+    implementation("io.ktor:ktor-server-netty-jvm:2.3.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+
+    testImplementation("io.kotest:kotest-runner-junit5:5.7.2")
+    testImplementation("io.kotest:kotest-assertions-core:5.7.2")
+    testImplementation("com.datastax.oss:java-driver-core:4.15.0")
 }
 
-tasks.test {
-
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
 }
 
 val collectLibs = tasks.create("collectLibs") {
