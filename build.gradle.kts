@@ -2,11 +2,12 @@
 plugins {
     kotlin("jvm") version "1.9.10"
     `java-library`
+    `maven-publish`
     kotlin("plugin.serialization") version "1.9.10"
 }
 
 group = "com.github"
-version = "0.1.0"
+version = "0.2.0"
 
 repositories {
     mavenCentral()
@@ -53,6 +54,15 @@ val collectLibs = tasks.create("collectLibs") {
 sourceSets.main.configure {
     resources {
         srcDir(file("${buildDir}/rustLibs/native"))
+    }
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+
+            from(components["java"])
+        }
     }
 }
 
