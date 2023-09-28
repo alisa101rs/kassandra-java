@@ -181,8 +181,6 @@ And load it later to without any initialization
 }
 ```
 
-Certainly, an effective README file is crucial for introducing your library to potential users and contributors. Below
-is a sample README.md file for your Kotlin/Java library, `Kassandra`.
 
 ---
 
