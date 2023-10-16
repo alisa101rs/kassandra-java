@@ -18,11 +18,7 @@ kotlin {
     jvmToolchain(11)
 }
 
-val rustLib = configurations.create("rustLib")
-
 dependencies {
-    rustLib(project("rust"))
-
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.2")
     implementation("io.ktor:ktor-server-core-jvm:2.3.4")
@@ -38,23 +34,59 @@ tasks.withType<Test>().configureEach {
     useJUnitPlatform()
 }
 
-val collectLibs = tasks.create("collectLibs") {
-    dependsOn(rustLib)
+fun jniLibOsClassifier(): String {
+    val os = System.getProperty("os.name").lowercase()
 
-    doLast {
-        rustLib.resolve().forEach { artifact ->
-            copy {
-                from(artifact)
-                into(file("${buildDir}/rustLibs/native"))
-            }
-        }
+    if (os.contains("linux")) {
+        return "linux"
+    }
+    if (os.contains("mac os") || os.contains("darwin")) {
+        return "macos"
+    }
+    if (os.contains("windows")){
+        return "windows"
+    }
+    throw RuntimeException("platform not supported: " + System.getProperty("os.name"))
+}
+
+fun jniLibArchClassifier(): String {
+    val target = rustTargetTriple()
+    // Use the first part of the rust target triple as the arch classifier if set, otherwise assume "x86_64"
+    return if (target != null) {
+        target.split("-")[0]
+    } else {
+        "x86_64"
     }
 }
 
-sourceSets.main.configure {
-    resources {
-        srcDir(file("${buildDir}/rustLibs/native"))
+fun rustTargetTriple(): String? =
+    System.getenv("JNILIB_RUST_TARGET")
+
+val buildJniLib = task<Exec>("buildJniLib") {
+    workingDir = File("./rust")
+
+    val args = mutableListOf("cargo", "build", "--release")
+    val triple = rustTargetTriple()
+    if (triple != null) {
+        args += listOf("--target", triple)
     }
+
+    commandLine(args)
+}
+
+task<Copy>("copyJniLib") {
+    dependsOn(buildJniLib)
+
+    val targetDir = rustTargetTriple() ?: ""
+    from("rust/target/$targetDir/release")
+    include("*.so", "*.dylib", "*.dll")
+    rename(
+        "^(lib)?kassandra_jni",
+        "\$1kassandra_jni_${project.version}_${jniLibOsClassifier()}_${jniLibArchClassifier()}"
+    )
+    into(
+        File(project.buildDir, "jni-libs")
+    )
 }
 
 publishing {
@@ -66,6 +98,3 @@ publishing {
     }
 }
 
-tasks.processResources {
-    dependsOn(collectLibs)
-}
