@@ -2,7 +2,7 @@ FROM ubuntu:16.04
 
 ARG TOOLCHAIN=stable-2023-10-05
 
-RUN apt-get update && apt-get install -y curl git gcc openjdk-11-jdk-headless gcc-aarch64-linux-gnu ca-certificates
+RUN apt-get update && apt-get install -y curl git gcc openjdk-11-jdk gcc-aarch64-linux-gnu ca-certificates
 
 ENV PATH=$PATH:/rust/bin:/root/.cargo/bin
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
