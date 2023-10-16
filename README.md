@@ -37,7 +37,7 @@ Add the dependency:
 
 ```kotlin
 dependencies {
-    implementation("com.github.kassandra:kassandra:0.1.0")
+    implementation("com.github.kassandra:kassandra:$KASSANDRA_VERSION")
 }
 ```
 
@@ -190,5 +190,5 @@ Contributions are always welcome! Feel free to open an issue or submit a pull re
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 

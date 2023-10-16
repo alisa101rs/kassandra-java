@@ -35,7 +35,7 @@ public class KassandraSession internal constructor(internal val ptr: Long) : Clo
 
     public val address: InetSocketAddress
         get() = InetSocketAddress(
-            socket.localAddress.toJavaAddress().address,
+            "0.0.0.0",
             socket.localAddress.toJavaAddress().port
         )
 
