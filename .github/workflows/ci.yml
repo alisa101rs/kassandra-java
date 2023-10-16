@@ -16,10 +16,10 @@ jobs:
           - build: x86_64-linux
             os: ubuntu-latest
             docker: true
-          - build: aarch64-linux
-            os: ubuntu-latest
-            target: aarch64-unknown-linux-gnu
-            docker: true
+#          - build: aarch64-linux
+#            os: ubuntu-latest
+#            target: aarch64-unknown-linux-gnu
+#            docker: true
           - build: x86_64-macos
             os: macos-latest
           - build: aarch64-macos
