@@ -6,7 +6,6 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.result.shouldBeSuccess
 import io.kotest.matchers.result.shouldNotBeSuccess
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.JsonPrimitive
@@ -17,7 +16,6 @@ import java.util.*
 class KassandraSessionTest : StringSpec({
     suspend fun KassandraSession.cqlSession(): CqlSession {
         start()
-        delay(400)
 
         return CqlSession.builder()
             .withLocalDatacenter("datacenter1")

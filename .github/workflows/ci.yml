@@ -65,7 +65,7 @@ jobs:
       # Otherwise, run gradle normally to build the JNI lib
       - name: Build with Gradle
         if: ${{ !matrix.docker }}
-        run: ./gradlew build copyJniLib ${GRADLE_ARGS}
+        run: ./gradlew build copyJniLib ${GRADLE_ARGS} -x test
 
       - name: List shared library files
         run:

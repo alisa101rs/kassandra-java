@@ -1,8 +1,6 @@
 package com.github.kassandra
 
 import io.netty.util.internal.NativeLibraryLoader
-import java.io.IOException
-import java.io.UncheckedIOException
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.util.*
@@ -13,9 +11,7 @@ public object NativeLoader {
 
     @Synchronized
     public fun init() {
-        if (System.getenv("DISABLE_AUTO_LOAD_ENV") == null) {
-            load()
-        }
+        load()
     }
 
     @Synchronized
