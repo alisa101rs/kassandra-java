@@ -18,6 +18,16 @@ kotlin {
     jvmToolchain(11)
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+    withSourcesJar()
+}
+
+tasks.withType<JavaCompile> {
+    options.encoding = "UTF-8"
+}
+
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.2")
@@ -29,6 +39,24 @@ dependencies {
     testImplementation("io.kotest:kotest-assertions-core:5.7.2")
     testImplementation("com.datastax.oss:java-driver-core:4.15.0")
 }
+
+sourceSets {
+    main {
+        resources {
+            srcDirs("build/jni-libs")
+        }
+    }
+}
+
+
+getTasksByName("sourcesJar", false).forEach {
+    it.dependsOn("copyJniLib")
+}
+
+getTasksByName("processResources", false).forEach {
+    it.dependsOn("copyJniLib")
+}
+
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
@@ -82,7 +110,7 @@ task<Copy>("copyJniLib") {
     include("*.so", "*.dylib", "*.dll")
     rename(
         "^(lib)?kassandra_jni",
-        "\$1kassandra_jni_${project.version}_${jniLibOsClassifier()}_${jniLibArchClassifier()}"
+        "\$1kassandra_jni_${jniLibOsClassifier()}_${jniLibArchClassifier()}"
     )
     into(
         File(project.buildDir, "jni-libs")

@@ -10,7 +10,7 @@ public object Kassandra {
     private external fun finalize(ptr: Long)
 
     init {
-        NativeLoader.loadLibrary(javaClass.classLoader, System.mapLibraryName("kassandra_jni"))
+        NativeLoader.init()
     }
 
     public fun create(): KassandraSession = KassandraSession(initialize())
