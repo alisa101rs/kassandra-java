@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.github"
-version = "0.2.0"
+version = "0.2.10"
 
 repositories {
     mavenCentral()
@@ -115,6 +115,19 @@ task<Copy>("copyJniLib") {
     into(
         File(project.buildDir, "jni-libs")
     )
+}
+
+task<Jar>("universalJar") {
+    dependsOn("jar")
+    archiveClassifier = "universal"
+    val jar = getTasksByName("jar", false).first()
+
+    from(zipTree(jar.outputs.files.singleFile)) {
+        exclude("libkassandra_jni_*")
+        exclude("kassandra_jni_*")
+    }
+
+    from(File(project.buildDir, "jni-libs"))
 }
 
 publishing {

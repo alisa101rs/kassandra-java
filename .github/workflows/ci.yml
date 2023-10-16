@@ -28,7 +28,7 @@ jobs:
           - build: x86_64-windows
             os: windows-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
@@ -77,3 +77,42 @@ jobs:
         with:
           name: jni-libs
           path: build/jni-libs/*
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '11'
+      - name: Restore JNI libs
+        uses: actions/download-artifact@v2
+        with:
+          name: jni-libs
+          path: build/jni-libs
+      - name: Build universal jar
+        run: ./gradlew universalJar -x buildJniLib -x copyJniLib
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+      - id: get-tag-version
+        run: |
+          version=$(echo ${{github.ref}} | cut -f3 -d/ | sed 's/^v//')
+          echo "::set-output name=version::$version"
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: build/libs/kassandra-${{ steps.get-tag-version.outputs.version }}-universal.jar
+          asset_name: kassadra-${{ steps.get-tag-version.outputs.version }}-universal.jar
+          asset_content_type: application/octet-stream
