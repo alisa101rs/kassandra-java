@@ -6,6 +6,7 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.result.shouldBeSuccess
 import io.kotest.matchers.result.shouldNotBeSuccess
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.delay
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.JsonPrimitive
 import java.util.*
@@ -13,8 +14,9 @@ import java.util.*
 
 @OptIn(ExperimentalSerializationApi::class)
 class KassandraSessionTest : StringSpec({
-    fun KassandraSession.cqlSession(): CqlSession {
+    suspend fun KassandraSession.cqlSession(): CqlSession {
         start()
+        delay(10)
 
         return CqlSession.builder()
             .withLocalDatacenter("datacenter1")
@@ -87,7 +89,7 @@ class KassandraSessionTest : StringSpec({
 
 
     "state should be saved and load successfully" {
-        val getState = {
+        val getState = suspend {
             val session = Kassandra.create()
             val cql = session.cqlSession()
             cql.initializeTables()
