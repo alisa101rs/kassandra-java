@@ -45,7 +45,6 @@ jobs:
         run: |
           echo CARGO_BUILD_TARGET=${{ matrix.target }} >> build_env.txt
           echo JNILIB_RUST_TARGET=${{ matrix.target }} >> build_env.txt
-          echo BUILD_NATIVE=true >> build_env.txt
           echo GRADLE_ARGS="${GRADLE_ARGS} -x test">> build_env.txt
           cat build_env.txt >> $GITHUB_ENV
           rustup target add ${{ matrix.target }}
