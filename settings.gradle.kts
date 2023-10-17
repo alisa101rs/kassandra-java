@@ -10,5 +10,3 @@ plugins {
 }
 
 rootProject.name = "kassandra"
-
-include("rust")

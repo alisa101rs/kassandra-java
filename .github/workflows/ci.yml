@@ -60,12 +60,12 @@ jobs:
           docker run --rm --volume $PWD:/build --workdir /build \
             --env-file build_env.txt \
             build-image \
-            ./gradlew build copyJniLib -x javadoc ${GRADLE_ARGS}
+            ./gradlew copyJniLib -x javadoc ${GRADLE_ARGS}
 
       # Otherwise, run gradle normally to build the JNI lib
       - name: Build with Gradle
         if: ${{ !matrix.docker }}
-        run: ./gradlew build copyJniLib ${GRADLE_ARGS} -x test
+        run: ./gradlew copyJniLib ${GRADLE_ARGS} -x test
 
       - name: List shared library files
         run:
