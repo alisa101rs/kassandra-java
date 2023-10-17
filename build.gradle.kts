@@ -1,3 +1,11 @@
+import java.io.IOException
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse.BodyHandlers
+import java.nio.file.StandardOpenOption
+import kotlin.io.path.Path
+import kotlin.io.path.createDirectories
 
 plugins {
     kotlin("jvm") version "1.9.10"
@@ -7,7 +15,7 @@ plugins {
 }
 
 group = "com.github"
-version = "0.2.10"
+version = "0.2.11"
 
 repositories {
     mavenCentral()
@@ -48,13 +56,12 @@ sourceSets {
     }
 }
 
-
-getTasksByName("sourcesJar", false).forEach {
-    it.dependsOn("copyJniLib")
+val sourcesJar by tasks.existing {
+    dependsOn(getNativeLibs)
 }
 
-getTasksByName("processResources", false).forEach {
-    it.dependsOn("copyJniLib")
+val processResources by tasks.existing {
+    dependsOn(getNativeLibs)
 }
 
 
@@ -71,7 +78,7 @@ fun jniLibOsClassifier(): String {
     if (os.contains("mac os") || os.contains("darwin")) {
         return "macos"
     }
-    if (os.contains("windows")){
+    if (os.contains("windows")) {
         return "windows"
     }
     throw RuntimeException("platform not supported: " + System.getProperty("os.name"))
@@ -90,7 +97,7 @@ fun jniLibArchClassifier(): String {
 fun rustTargetTriple(): String? =
     System.getenv("JNILIB_RUST_TARGET")
 
-val buildJniLib = task<Exec>("buildJniLib") {
+val buildJniLib by tasks.creating(Exec::class) {
     workingDir = File("./rust")
 
     val args = mutableListOf("cargo", "build", "--release")
@@ -102,7 +109,7 @@ val buildJniLib = task<Exec>("buildJniLib") {
     commandLine(args)
 }
 
-task<Copy>("copyJniLib") {
+val copyJniLib by tasks.creating(Copy::class) {
     dependsOn(buildJniLib)
 
     val targetDir = rustTargetTriple() ?: ""
@@ -117,12 +124,50 @@ task<Copy>("copyJniLib") {
     )
 }
 
-task<Jar>("universalJar") {
-    dependsOn("jar")
-    archiveClassifier = "universal"
-    val jar = getTasksByName("jar", false).first()
+val getNativeLibs by tasks.creating {
+    if (System.getenv("BUILD_NATIVE") != null) {
+        dependsOn(copyJniLib)
+        outputs.files(copyJniLib.outputs.files)
+        return@creating
+    }
 
-    from(zipTree(jar.outputs.files.singleFile)) {
+    val base = "https://github.com/alisa101rs/kassandra-java/releases/download/v${project.version}/"
+    val nativeLibs = listOf(
+        "libkassandra_jni_macos_x86_64.so",
+        "libkassandra_jni_macos_x86_64.dylib",
+        "libkassandra_jni_macos_aarch64.so",
+        "libkassandra_jni_macos_aarch64.dylib",
+        "libkassandra_jni_linux_x86_64.so",
+        "libkassandra_jni_linux_x86_64.dylib",
+        "kassandra_jni_windows_x86_64.dll",
+    )
+    val output = File(project.buildDir, "jni-libs").path
+
+    outputs.files(
+        nativeLibs.map { nativeLib ->
+            try {
+                download(
+                    URI("${base}${nativeLib}"),
+                    Path(output)
+                )
+            } catch(e: IOException) {
+                logger.error("Could not get native lib: $nativeLib", e)
+            }
+        }
+    )
+}
+
+val build by tasks.existing {
+    dependsOn(getNativeLibs)
+}
+
+val jar by tasks.existing(Jar::class) { }
+
+val universalJar = task<Jar>("universalJar") {
+    dependsOn(jar)
+    archiveClassifier = "universal"
+
+    from(zipTree(jar.get().outputs.files.singleFile)) {
         exclude("libkassandra_jni_*")
         exclude("kassandra_jni_*")
     }
@@ -130,11 +175,51 @@ task<Jar>("universalJar") {
     from(File(project.buildDir, "jni-libs"))
 }
 
+val assemble by tasks.existing {
+    dependsOn(universalJar)
+}
+
+fun download(uri: URI, output: java.nio.file.Path): java.nio.file.Path {
+    output.createDirectories()
+    val req = HttpRequest.newBuilder(uri)
+        .GET()
+        .build()
+
+    val response = HttpClient
+        .newBuilder()
+        .followRedirects(HttpClient.Redirect.ALWAYS)
+        .build()
+        .send(req, BodyHandlers.ofFileDownload(output, StandardOpenOption.CREATE, StandardOpenOption.WRITE))
+
+    return response.body()
+}
+
 publishing {
     publications {
         create<MavenPublication>("maven") {
+            artifact(universalJar)
 
-            from(components["java"])
+            pom {
+                name = "kassandra"
+                description = "JVM Kassandra bindings"
+                scm {
+                    url = "https://github.com/alisa101rs/kassandra-java"
+                    connection = "scm:https://github.com/alisa101rs/kassandra-java.git"
+                    developerConnection = "scm:git@github.com/alisa101rs/kassandra-java.git"
+                }
+                licenses {
+                    license {
+                        name = "The MIT License (MIT)"
+                        url = "https://mit-license.org/"
+                    }
+                }
+                developers {
+                    developer {
+                        name = "Alisa Gorelova"
+                        email = "nanopro1g@gmail.com"
+                    }
+                }
+            }
         }
     }
 }

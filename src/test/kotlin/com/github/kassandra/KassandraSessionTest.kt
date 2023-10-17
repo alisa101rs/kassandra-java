@@ -6,6 +6,11 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.result.shouldBeSuccess
 import io.kotest.matchers.result.shouldNotBeSuccess
 import io.kotest.matchers.shouldBe
+import io.ktor.network.selector.SelectorManager
+import io.ktor.network.sockets.SocketOptions
+import io.ktor.network.sockets.TcpSocketBuilder
+import io.ktor.network.sockets.aSocket
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.future.await
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.JsonPrimitive
@@ -20,8 +25,7 @@ class KassandraSessionTest : StringSpec({
         return CqlSession.builder()
             .withLocalDatacenter("datacenter1")
             .addContactPoint(address)
-            .buildAsync()
-            .await()
+            .build()
     }
 
     fun CqlSession.initializeTables() {

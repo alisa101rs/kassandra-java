@@ -8,7 +8,7 @@ import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import io.ktor.network.sockets.toJavaAddress
-import io.ktor.util.network.address
+import io.ktor.util.network.hostname
 import io.ktor.util.network.port
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.CancellationException
@@ -29,19 +29,18 @@ public class KassandraSession internal constructor(internal val ptr: Long) : Clo
     private val job = SupervisorJob()
     private val socket: ServerSocket = aSocket(ActorSelectorManager(job))
         .tcp()
-        .bind()
+        .bind(hostname = "localhost", port = 0)
     private val started: AtomicBoolean = AtomicBoolean(false)
     private val closed: AtomicBoolean = AtomicBoolean(false)
 
     public val address: InetSocketAddress
         get() = InetSocketAddress(
-            "0.0.0.0",
+            socket.localAddress.toJavaAddress().hostname,
             socket.localAddress.toJavaAddress().port
         )
 
     public fun start() {
         if (started.get()) return
-
         started.set(true)
         CoroutineScope(job).listen()
     }
