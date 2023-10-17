@@ -1,21 +1,15 @@
-import java.io.FileOutputStream
-import java.io.IOException
-import java.net.URI
-import kotlin.io.path.Path
-import kotlin.io.path.absolutePathString
-import kotlin.io.path.createDirectories
-import kotlin.io.path.div
-import kotlin.io.copyTo
+import de.undercouch.gradle.tasks.download.Download
 
 plugins {
     kotlin("jvm") version "1.9.10"
     `java-library`
     `maven-publish`
     kotlin("plugin.serialization") version "1.9.10"
+    id("de.undercouch.download") version "5.5.0"
 }
 
 group = "com.github"
-version = "0.2.19"
+version = "0.2.20"
 
 repositories {
     mavenCentral()
@@ -124,34 +118,23 @@ val copyJniLib by tasks.creating(Copy::class) {
     )
 }
 
+val downloadLibs by tasks.creating(Download::class) {
+    src(listOf(
+        "https://github.com/alisa101rs/kassandra-java/releases/download/v${project.version}/libkassandra_jni_macos_x86_64.dylib",
+        "https://github.com/alisa101rs/kassandra-java/releases/download/v${project.version}/libkassandra_jni_macos_aarch64.dylib",
+        "https://github.com/alisa101rs/kassandra-java/releases/download/v${project.version}/libkassandra_jni_linux_x86_64.so",
+        "https://github.com/alisa101rs/kassandra-java/releases/download/v${project.version}/kassandra_jni_windows_x86_64.dll",
+    ))
+    dest(File(project.buildDir, "jni-libs"))
+}
+
 val getNativeLibs by tasks.creating {
     if (System.getenv("BUILD_NATIVE") != null) {
         dependsOn(copyJniLib)
         outputs.files(copyJniLib.outputs.files)
-        return@creating
     } else {
-        val base = "https://github.com/alisa101rs/kassandra-java/releases/download/v${project.version}/"
-        val nativeLibs = listOf(
-            "libkassandra_jni_macos_x86_64.dylib",
-            "libkassandra_jni_macos_aarch64.dylib",
-            "libkassandra_jni_linux_x86_64.so",
-            "kassandra_jni_windows_x86_64.dll",
-        )
-        val output = File(project.buildDir, "jni-libs").path
+        dependsOn(downloadLibs)
 
-        outputs.files(
-            nativeLibs.mapNotNull { nativeLib ->
-                try {
-                    download(
-                        URI("${base}${nativeLib}"),
-                        Path(output)
-                    )
-                } catch(e: IOException) {
-                    logger.error("Could not get native lib: $nativeLib")
-                    null
-                }
-            }
-        )
     }
 }
 
@@ -159,25 +142,14 @@ val build by tasks.existing {
     dependsOn(getNativeLibs)
 }
 
-val jar by tasks.existing(Jar::class) { }
-
-val assemble by tasks.existing {}
-
-fun download(uri: URI, output: java.nio.file.Path): java.nio.file.Path {
-    output.createDirectories()
-
-    val fileName = uri.path.split("/").last()
-    val outputFile = output / fileName
-
-    uri.toURL().openStream()
-        .buffered()
-        .use { input ->
-            val file = FileOutputStream(outputFile.absolutePathString())
-            input.copyTo(file)
-    }
-
-    return outputFile
+val jar by tasks.existing(Jar::class) {
+    dependsOn(getNativeLibs)
 }
+
+val assemble by tasks.existing {
+    dependsOn(getNativeLibs)
+}
+
 
 fun groovy.util.Node.addDependencyNodes(scope: String, deps: DependencySet) {
     deps.forEach {
