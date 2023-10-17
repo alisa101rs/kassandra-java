@@ -88,20 +88,17 @@ jobs:
         with:
           name: jni-libs
           path: build/jni-libs
-      - name: Create release
+      - name: Release
         id: create_release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-      - name: Upload release asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: build/jni-libs/*
-          asset_name: "ignored"
-          asset_content_type: application/octet-stream
+          files: |
+            build/jni-libs/libkassandra_jni_macos_x86_64.so
+            build/jni-libs/libkassandra_jni_macos_x86_64.dylib
+            build/jni-libs/libkassandra_jni_macos_aarch64.so
+            build/jni-libs/libkassandra_jni_macos_aarch64.dylib
+            build/jni-libs/libkassandra_jni_linux_x86_64.so
+            build/jni-libs/libkassandra_jni_linux_x86_64.dylib
+            build/jni-libs/kassandra_jni_windows_x86_64.dll
