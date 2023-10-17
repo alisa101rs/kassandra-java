@@ -130,7 +130,7 @@ val getNativeLibs by tasks.creating {
         outputs.files(copyJniLib.outputs.files)
         return@creating
     } else {
-        val base = "https://github.com/alisa101rs/kassandra-java/releases/download/${project.version}/"
+        val base = "https://github.com/alisa101rs/kassandra-java/releases/download/v${project.version}/"
         val nativeLibs = listOf(
             "libkassandra_jni_macos_x86_64.dylib",
             "libkassandra_jni_macos_aarch64.dylib",
@@ -161,20 +161,8 @@ val build by tasks.existing {
 
 val jar by tasks.existing(Jar::class) { }
 
-val universalJar = task<Jar>("universalJar") {
-    dependsOn(jar)
-    archiveClassifier = "universal"
-
-    from(zipTree(jar.get().outputs.files.singleFile)) {
-        exclude("libkassandra_jni_*")
-        exclude("kassandra_jni_*")
-    }
-
-    from(File(project.buildDir, "jni-libs"))
-}
-
 val assemble by tasks.existing {
-    dependsOn(universalJar)
+
 }
 
 fun download(uri: URI, output: java.nio.file.Path): java.nio.file.Path {
@@ -196,7 +184,6 @@ fun download(uri: URI, output: java.nio.file.Path): java.nio.file.Path {
 publishing {
     publications {
         create<MavenPublication>("maven") {
-            artifact(universalJar)
 
             pom {
                 name = "kassandra"

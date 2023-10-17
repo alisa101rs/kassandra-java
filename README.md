@@ -38,7 +38,7 @@ Add the dependency:
 
 ```kotlin
 dependencies {
-    implementation("com.github.kassandra:kassandra:$KASSANDRA_VERSION")
+    implementation("com.github.alisa101rs:kassandra-java:$KASSANDRA_VERSION")
 }
 ```
 
