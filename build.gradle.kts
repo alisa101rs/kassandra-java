@@ -15,7 +15,7 @@ plugins {
 }
 
 group = "com.github"
-version = "0.2.17"
+version = "0.2.18"
 
 repositories {
     mavenCentral()
