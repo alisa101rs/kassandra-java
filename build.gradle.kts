@@ -15,7 +15,7 @@ plugins {
 }
 
 group = "com.github"
-version = "0.2.15"
+version = "0.2.16"
 
 repositories {
     mavenCentral()
@@ -132,12 +132,9 @@ val getNativeLibs by tasks.creating {
     } else {
         val base = "https://github.com/alisa101rs/kassandra-java/releases/download/v${project.version}/"
         val nativeLibs = listOf(
-            "libkassandra_jni_macos_x86_64.so",
             "libkassandra_jni_macos_x86_64.dylib",
-            "libkassandra_jni_macos_aarch64.so",
             "libkassandra_jni_macos_aarch64.dylib",
             "libkassandra_jni_linux_x86_64.so",
-            "libkassandra_jni_linux_x86_64.dylib",
             "kassandra_jni_windows_x86_64.dll",
         )
         val output = File(project.buildDir, "jni-libs").path
