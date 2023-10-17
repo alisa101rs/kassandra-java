@@ -161,9 +161,7 @@ val build by tasks.existing {
 
 val jar by tasks.existing(Jar::class) { }
 
-val assemble by tasks.existing {
-
-}
+val assemble by tasks.existing {}
 
 fun download(uri: URI, output: java.nio.file.Path): java.nio.file.Path {
     output.createDirectories()
@@ -181,9 +179,21 @@ fun download(uri: URI, output: java.nio.file.Path): java.nio.file.Path {
     return outputFile
 }
 
+fun groovy.util.Node.addDependencyNodes(scope: String, deps: DependencySet) {
+    deps.forEach {
+        val dependencyNode = appendNode("dependency")
+        dependencyNode.appendNode("groupId", it.group)
+        dependencyNode.appendNode("artifactId", it.name)
+        dependencyNode.appendNode("version", it.version)
+        dependencyNode.appendNode("scope", scope)
+    }
+}
+
 publishing {
     publications {
         create<MavenPublication>("maven") {
+            artifact(jar)
+            artifact(sourcesJar)
 
             pom {
                 name = "kassandra"
@@ -205,7 +215,17 @@ publishing {
                         email = "nanopro1g@gmail.com"
                     }
                 }
+                withXml {
+                    val node = asNode().appendNode("dependencies")
+                    node.addDependencyNodes(
+                        "compile", project.configurations.api.get().allDependencies
+                    )
+                    node.addDependencyNodes(
+                        "runtime", project.configurations.implementation.get().allDependencies
+                    )
+                }
             }
+
         }
     }
 }
