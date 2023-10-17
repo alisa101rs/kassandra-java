@@ -96,10 +96,6 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           release_name: ${{ github.ref }}
-      - id: get-tag-version
-        run: |
-          version=$(echo ${{github.ref}} | cut -f3 -d/ | sed 's/^v//')
-          echo "::set-output name=version::$version"
       - name: Upload release asset
         uses: actions/upload-release-asset@v1
         env:
@@ -107,4 +103,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: build/jni-libs/*
+          asset_name: "ignored"
           asset_content_type: application/octet-stream
