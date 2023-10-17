@@ -1,11 +1,11 @@
+import java.io.FileOutputStream
 import java.io.IOException
 import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse.BodyHandlers
-import java.nio.file.StandardOpenOption
 import kotlin.io.path.Path
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.createDirectories
+import kotlin.io.path.div
+import kotlin.io.copyTo
 
 plugins {
     kotlin("jvm") version "1.9.10"
@@ -15,7 +15,7 @@ plugins {
 }
 
 group = "com.github"
-version = "0.2.16"
+version = "0.2.17"
 
 repositories {
     mavenCentral()
@@ -130,7 +130,7 @@ val getNativeLibs by tasks.creating {
         outputs.files(copyJniLib.outputs.files)
         return@creating
     } else {
-        val base = "https://github.com/alisa101rs/kassandra-java/releases/download/v${project.version}/"
+        val base = "https://github.com/alisa101rs/kassandra-java/releases/download/${project.version}/"
         val nativeLibs = listOf(
             "libkassandra_jni_macos_x86_64.dylib",
             "libkassandra_jni_macos_aarch64.dylib",
@@ -179,17 +179,18 @@ val assemble by tasks.existing {
 
 fun download(uri: URI, output: java.nio.file.Path): java.nio.file.Path {
     output.createDirectories()
-    val req = HttpRequest.newBuilder(uri)
-        .GET()
-        .build()
 
-    val response = HttpClient
-        .newBuilder()
-        .followRedirects(HttpClient.Redirect.ALWAYS)
-        .build()
-        .send(req, BodyHandlers.ofFileDownload(output, StandardOpenOption.CREATE, StandardOpenOption.WRITE))
+    val fileName = uri.path.split("/").last()
+    val outputFile = output / fileName
 
-    return response.body()
+    uri.toURL().openStream()
+        .buffered()
+        .use { input ->
+            val file = FileOutputStream(outputFile.absolutePathString())
+            input.copyTo(file)
+    }
+
+    return outputFile
 }
 
 publishing {

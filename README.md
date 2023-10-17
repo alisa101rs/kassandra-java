@@ -1,4 +1,5 @@
 # Kassandra: In-Memory CQL Compliant Cassandra for Testing
+[![](https://jitpack.io/v/alisa101rs/kassandra-java.svg)](https://jitpack.io/#alisa101rs/kassandra-java)
 
 ## Overview
 
