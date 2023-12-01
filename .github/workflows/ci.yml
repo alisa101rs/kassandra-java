@@ -1,11 +1,11 @@
 name: CI
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
     tags:
       - '*'
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 jobs:
   build:
     name: Build JNI lib for ${{ matrix.build }}
