@@ -52,10 +52,10 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew copyJniLib ${GRADLE_ARGS} -x test
 
+      - name: Set env
+        run: echo "BUILD_NATIVE=1" >> $GITHUB_ENV
       - name: Test with Gradle
-        run: | 
-          export BUILD_NATIVE=1
-          ./gradlew test
+        run: ./gradlew test
 
       - name: List shared library files
         run:
