@@ -15,11 +15,9 @@ jobs:
         include:
           - build: x86_64-linux
             os: ubuntu-latest
-#            docker: true
 #          - build: aarch64-linux
 #            os: ubuntu-latest
 #            target: aarch64-unknown-linux-gnu
-#            docker: true
           - build: x86_64-macos
             os: macos-latest
           - build: aarch64-macos
@@ -49,23 +47,15 @@ jobs:
           cat build_env.txt >> $GITHUB_ENV
           rustup target add ${{ matrix.target }}
 
-      # Run gradle in a docker container to build the JNI lib on Linux for old glibc compatibility
-      - name: Build with Gradle (Linux)
-        if: ${{ matrix.docker }}
-        run: |
-          if [ ! -e build_env.txt ]; then
-            touch build_env.txt
-          fi
-          docker build -t build-image ./ci/docker/${{ matrix.build }}
-          docker run --rm --volume $PWD:/build --workdir /build \
-            --env-file build_env.txt \
-            build-image \
-            ./gradlew copyJniLib -x javadoc ${GRADLE_ARGS}
 
       # Otherwise, run gradle normally to build the JNI lib
       - name: Build with Gradle
-        if: ${{ !matrix.docker }}
         run: ./gradlew copyJniLib ${GRADLE_ARGS} -x test
+
+      - name: Test with Gradle
+        env:
+          BUILD_NATIVE=1
+        run: ./gradlew test
 
       - name: List shared library files
         run:
