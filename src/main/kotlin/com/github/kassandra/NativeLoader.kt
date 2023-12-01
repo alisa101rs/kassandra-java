@@ -1,6 +1,5 @@
 package com.github.kassandra
 
-import io.netty.util.internal.NativeLibraryLoader
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.util.*
@@ -43,7 +42,7 @@ public object NativeLoader {
         val ext = platform.ext
         val fileName = "${platform.prefix}${NATIVE_LIBRARY_NAME}_${platform.os.value}_${platform.arch.value}"
         val tempFile = Files.createTempFile(fileName, ext)
-        NativeLibraryLoader::class.java.getResourceAsStream("/$fileName$ext").use { stream ->
+        NativeLoader::class.java.getResourceAsStream("/$fileName$ext").use { stream ->
             Files.copy(
                 stream,
                 tempFile,
